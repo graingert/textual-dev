@@ -103,7 +103,6 @@ class DevtoolsClient:
         self.log_queue: Queue[str | bytes | Type[ClientShutdown]] | None = None
         self.spillover: int = 0
         self.verbose: bool = False
-        self._ready_event: asyncio.Event = asyncio.Event()
 
     async def connect(self) -> None:
         """Connect to the devtools server.
@@ -124,6 +123,7 @@ class DevtoolsClient:
 
         log_queue = self.log_queue
         websocket = self.websocket
+        ready_event = asyncio.Event()
 
         async def update_console() -> None:
             """Coroutine function scheduled as a Task, which listens on
@@ -141,7 +141,7 @@ class DevtoolsClient:
                         self.console.width = payload["width"]
                         self.console.height = payload["height"]
                         self.verbose = payload.get("verbose", False)
-                        self._ready_event.set()
+                        ready_event.set()
 
         async def send_queued_logs():
             """Coroutine function which is scheduled as a Task, which consumes
@@ -162,7 +162,7 @@ class DevtoolsClient:
         async def server_info_received() -> None:
             """Wait for the first server info message to be received and handled."""
             try:
-                await asyncio.wait_for(self._ready_event.wait(), timeout=READY_TIMEOUT)
+                await asyncio.wait_for(ready_event.wait(), timeout=READY_TIMEOUT)
             except asyncio.TimeoutError:
                 return
 
