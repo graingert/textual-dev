@@ -18,6 +18,7 @@ from textual._log import LogGroup
 from textual._time import time
 
 from textual_dev.renderables import DevConsoleHeader, DevConsoleLog, DevConsoleNotice
+from textual_dev._compat import cached_property
 
 QUEUEABLE_TYPES = {"client_log", "client_spillover"}
 
@@ -44,8 +45,11 @@ class DevtoolsService:
         self.verbose = verbose
         self.exclude = {name.upper() for name in exclude} if exclude else set()
         self.console = Console()
-        self.shutdown_event = asyncio.Event()
         self.clients: list[ClientHandler] = []
+
+    @cached_property
+    def shutdown_event(self) -> asyncio.Event:
+        return asyncio.Event()
 
     async def start(self) -> None:
         """Starts devtools tasks"""
