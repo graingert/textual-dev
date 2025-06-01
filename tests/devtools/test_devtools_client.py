@@ -1,6 +1,6 @@
 import json
 import types
-from asyncio import Queue
+import asyncio
 from datetime import datetime
 
 import msgpack
@@ -19,6 +19,16 @@ TIMESTAMP = 1649166819
 
 
 def test_devtools_client_initialize_defaults():
+    devtools = DevtoolsClient()
+    assert devtools.url == f"ws://127.0.0.1:{DEVTOOLS_PORT}"
+
+
+def test_devtools_client_initialize_defaults_after_asyncio_run():
+    async def amain():
+        pass
+
+    asyncio.run(amain())
+
     devtools = DevtoolsClient()
     assert devtools.url == f"ws://127.0.0.1:{DEVTOOLS_PORT}"
 
@@ -59,7 +69,7 @@ async def test_devtools_log_places_encodes_and_queues_many_logs_as_string(devtoo
 async def test_devtools_log_spillover(devtools):
     # Give the devtools an intentionally small max queue size
     await devtools._stop_log_queue_processing()
-    devtools.log_queue = Queue(maxsize=2)
+    devtools.log_queue = asyncio.Queue(maxsize=2)
 
     # Force spillover of 2
     devtools.log(DevtoolsLog((Panel("hello, world"),), CALLER))
